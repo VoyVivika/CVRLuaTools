@@ -101,70 +101,82 @@ namespace NAK.LuaTools
 			HashSet<string> functions = new();
 
 			int start = 0;
-			for (var i = 0; i < markers.Count; i++) {
-				int end = markers[i];
-				while (!Delimiters.Contains(text[end])) end++;
-				string word = text.Slice(markers[i], end - markers[i]).ToString();
-				
+			int depth = 0;
+			for (int i = 0; i < markers.Count; i++) {
+				int markerPos = markers[i];
+				int end = markerPos;
+				while (end < text.Length && !Delimiters.Contains(text[end])) end++;
+				string word = text.Slice(markerPos, end - markerPos).ToString();
+
 				switch (word) {
 					case "require":
-						// look backwards for variable name
-						int varStart = LastWord(markers[i], text, out end);
+						int varStart = LastWord(markerPos, text, out end);
 						string variable = text.Slice(varStart, end - varStart).ToString();
-						
-						// check for local
+
 						int localStart = LastWord(varStart, text, out end);
 						if (text.Slice(localStart, end - localStart).ToString() != "local") {
 							localStart = varStart;
 						}
-						
-						// append last block
+
 						otherBuilder.Append(text.Slice(start, localStart - start));
-						
-						// look forwards for module name
-						start = NextWord(markers[i], text, out end);
+
+						start = NextWord(markerPos, text, out end);
 						string module = text.Slice(start, end - start).ToString();
-						
+
 						start = NextWord(start, text);
 
-						// if module name is duplicate replace (require("...")|require "...") with non duplicate require variable
 						if (modules.TryAdd(module, variable)) {
 							requireBuilder.Append($"{variable} = require(\"{module}\")\n");
-						}
-						else {
+						} else {
 							requireBuilder.Append($"{variable} = {modules[module]}\n");
 						}
 						break;
+
 					case "function":
-						// extend functionStart to include local if it exists
-						int functionStart = LastWord(markers[i], text, out int functionEnd);
-						if (text.Slice(functionStart, functionEnd - functionStart).ToString() != "local") {
-							functionStart = markers[i];
+					case "if":
+					case "for":
+					case "while":
+						if (depth == 0) {
+							int functionStart = LastWord(markerPos, text, out int functionEnd);
+							if (text.Slice(functionStart, functionEnd - functionStart).ToString() != "local") {
+								functionStart = markerPos;
+							}
+
+							otherBuilder.Append(text.Slice(start, functionStart - start));
+
+							start = markerPos;
 						}
+						depth++;
+						break;
 
-						otherBuilder.Append(text.Slice(start, functionStart - start));
-						
-						// look forward for function name
-						start = NextWord(markers[i], text, out end);
-						string function = text.Slice(start, end - start).ToString();
-						
-						// next marker should be "end"
-						i++;
+					case "end":
+						depth--;
+						if (depth == 0) {
+							int functionEndPos = markers[i];
+							if (start < functionEndPos) {
+								string funcBlock = text.Slice(start, functionEndPos - start).ToString();
 
-						// append function if its unique
-						if (functions.Add(function)) {
-							functionBuilder.Append(text.Slice(functionStart, markers[i] - functionStart));
+								// Extract function name
+								int nameStart = NextWord(start, text, out int nameEnd);
+								string functionName = text.Slice(nameStart, nameEnd - nameStart).ToString();
+
+								if (functions.Add(functionName)) {
+									functionBuilder.Append(funcBlock);
+								}
+							}
+							start = markers[i];
 						}
+						break;
 
-						start = markers[i];
+					default:
 						break;
 				}
 			}
 
-			// append last block
-			otherBuilder.Append(text.Slice(start, text.Length - start));
+			if (start < text.Length) {
+				otherBuilder.Append(text.Slice(start, text.Length - start));
+			}
 
-			// merge order in 
 			requireBuilder.Append('\n');
 			requireBuilder.Append(otherBuilder);
 			requireBuilder.Append('\n');
@@ -178,18 +190,16 @@ namespace NAK.LuaTools
 				if (requireBuilder[i] == '\n' || requireBuilder[i] == '\r') {
 					if (!lastNewline) {
 						lastNewline = true;
-
 						builder.Append(requireBuilder, blockStart, i - blockStart);
 						builder.Append('\n');
 					}
-				}
-				else {
+				} else {
 					if (lastNewline)
 						blockStart = i;
 					lastNewline = false;
 				}
 			}
-			
+
 			return builder.ToString();
 		}
 	}

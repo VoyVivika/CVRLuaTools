@@ -1,47 +1,24 @@
 ﻿#if UNITY_EDITOR && CVR_CCK_EXISTS
-using System.Collections.Generic;
-using ABI.CCK.Scripts.Editor;
+using ABI.CCKEditor.ContentBuilder;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace NAK.LuaTools
 {
-    [InitializeOnLoad]
-    public class CCKBuildEventListener
+    [UsedImplicitly]
+    public class LuaClientBuildProcessor : CCKBuildProcessor
     {
-        static CCKBuildEventListener()
+        public override void OnPreProcessAvatar(GameObject avatar) => ProcessWrappers();
+        public override void OnPreProcessSpawnable(GameObject prop) => ProcessWrappers();
+        public override void OnPreProcessWorld(GameObject world) => ProcessWrappers();
+        private static void ProcessWrappers()
         {
-            CCK_BuildUtility.PreAvatarBundleEvent.AddListener(OnPreBundleEvent);
-            CCK_BuildUtility.PrePropBundleEvent.AddListener(OnPreBundleEvent);
-            CCK_BuildUtility.PreWorldBundleEvent.AddListener(OnPreBundleWorldEvent); // TODO: how to handle properly
-        }
-        
-        private static void OnPreBundleEvent(GameObject uploadedObject)
-        {
-            if (uploadedObject == null) return;
-            var luaClientWrappers = uploadedObject.GetComponentsInChildren<NAKLuaClientBehaviourWrapper>(true);
-            ProcessWrappers(luaClientWrappers);
-        }
-        
-        private static void OnPreBundleWorldEvent(Scene scene)
-        {
-            var luaClientWrappers = new List<NAKLuaClientBehaviourWrapper>();
-            var rootObjects = scene.GetRootGameObjects();
-            foreach (GameObject rootObject in rootObjects)
-            {
-                var foundWrappers = rootObject.GetComponentsInChildren<NAKLuaClientBehaviourWrapper>(true);
-                luaClientWrappers.AddRange(foundWrappers);
-            }
-            ProcessWrappers(luaClientWrappers, false);
-        }
-        
-        private static void ProcessWrappers(IList<NAKLuaClientBehaviourWrapper> luaClientWrappers, bool safeToDestroy = true)
-        {
-            foreach (NAKLuaClientBehaviourWrapper wrapper in luaClientWrappers)
+            var wrappers = GetAllComponents<NAKLuaClientBehaviourWrapper>();
+            foreach (var wrapper in wrappers)
             {
                 LuaScriptGenerator.CreateLuaClientBehaviourFromWrapper(wrapper);
-                if (safeToDestroy) Object.DestroyImmediate(wrapper);
+                Object.DestroyImmediate(wrapper);
             }
         }
     }
