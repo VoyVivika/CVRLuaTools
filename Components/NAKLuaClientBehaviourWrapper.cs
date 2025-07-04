@@ -60,13 +60,7 @@ namespace NAK.LuaTools
             public Vector3Int vector3IntValue;
             public RectInt rectIntValue;
             public BoundsInt boundsIntValue;
-
-            // Vector4 Variables
-            // www.youtube.com/watch?v=QV-DZtN2IMU
-            public float vec4x;
-            public float vec4y;
-            public float vec4z;
-            public float vec4w;
+            public Vector4 vector4Value;
 
             // Table
             public BoundItem[] boundEntries;
