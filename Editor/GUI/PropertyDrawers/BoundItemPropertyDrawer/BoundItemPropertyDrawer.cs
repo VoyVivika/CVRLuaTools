@@ -19,9 +19,11 @@ namespace NAK.LuaTools
             SerializedProperty nameProp = property.FindPropertyRelative("name");
             SerializedProperty typeProp = property.FindPropertyRelative("type");
 
-            var halfWidth = rect.width / 2;
+            var halfWidth = rect.width * 0.5f;
             var nameWidth = halfWidth * 0.65f;
             var typeWidth = halfWidth * 0.35f;
+            var quarterWidth = halfWidth * 0.25f;
+            var txtOffset = 14;
             
             const float buttonWidth = 19;
 
@@ -29,7 +31,18 @@ namespace NAK.LuaTools
             Rect typeRect = new(rect.x + nameWidth + 2, rect.y, typeWidth - 2, rect.height);
             Rect valueRect = new(rect.x + halfWidth + 2, rect.y, halfWidth - 2, rect.height);
             Rect buttonRect = new(rect.x + rect.width - buttonWidth, rect.y, buttonWidth, rect.height);
-            
+
+            // Why couldn't Vector 4s just be Properly Supported in EditorGUI.PropertyField
+            // If there's a better way to do this, let me know, cause this is what I thought to do.
+            Rect vec4xRect = new(rect.x + halfWidth + 2 + txtOffset, rect.y, (quarterWidth - txtOffset) - 2, rect.height);
+            Rect vec4yRect = new((rect.x + halfWidth + 2 + txtOffset) + (quarterWidth), rect.y, (quarterWidth - txtOffset) - 2, rect.height);
+            Rect vec4zRect = new((rect.x + halfWidth + 2 + txtOffset) + ((quarterWidth) * 2), rect.y, (quarterWidth - txtOffset) - 2, rect.height);
+            Rect vec4wRect = new((rect.x + halfWidth + 2 + txtOffset) + ((quarterWidth) * 3), rect.y, (quarterWidth - txtOffset) - 2, rect.height);
+            Rect txt4xRect = new(rect.x + halfWidth + 2, rect.y, txtOffset, rect.height);
+            Rect txt4yRect = new(rect.x + halfWidth + 2 + (quarterWidth), rect.y, txtOffset, rect.height);
+            Rect txt4zRect = new(rect.x + halfWidth + 2 + (quarterWidth * 2), rect.y, txtOffset, rect.height);
+            Rect txt4wRect = new(rect.x + halfWidth + 2 + (quarterWidth * 3), rect.y, txtOffset, rect.height);
+
             EditorGUI.PropertyField(nameRect, nameProp, GUIContent.none);
             EditorGUI.PropertyField(typeRect, typeProp, GUIContent.none);
             
@@ -100,6 +113,25 @@ namespace NAK.LuaTools
                 case NAKLuaClientBehaviourWrapper.BoundItemType.BoundsInt:
                     EditorGUI.PropertyField(valueRect, property.FindPropertyRelative("boundsIntValue"),
                         GUIContent.none);
+                    break;
+                case NAKLuaClientBehaviourWrapper.BoundItemType.Vector4:
+
+                    // If unity doesn't wanna directly give me a Vector 4 Editor, then I'll make one, and it'll be HACKY!!!
+                    // Update: so earlier doing something like FindPropertyRelative("vector4Value.x") didn't work, so I assumed I couldn't... and then it just decides to work.
+                    // I don't even
+                    // www.youtube.com/watch?v=QV-DZtN2IMU
+                    // sincerely, VoyVivika
+                    EditorGUI.PropertyField(vec4xRect, property.FindPropertyRelative("vector4Value.x"), GUIContent.none);
+                    EditorGUI.LabelField(txt4xRect, "X");
+                    EditorGUI.PropertyField(vec4yRect, property.FindPropertyRelative("vector4Value.y"), GUIContent.none);
+                    EditorGUI.LabelField(txt4yRect, "Y");
+                    EditorGUI.PropertyField(vec4zRect, property.FindPropertyRelative("vector4Value.z"), GUIContent.none);
+                    EditorGUI.LabelField(txt4zRect, "Z");
+                    EditorGUI.PropertyField(vec4wRect, property.FindPropertyRelative("vector4Value.w"), GUIContent.none);
+                    EditorGUI.LabelField(txt4wRect, "W");
+
+                    // Leaving this here whenever they actually add proper Vector 4 support to EditorGUI.PropertyField
+                    //EditorGUI.PropertyField(valueRect, property.FindPropertyRelative("vector4Value"), GUIContent.none);
                     break;
                 case NAKLuaClientBehaviourWrapper.BoundItemType.Table:
                     EditorGUI.LabelField(valueRect, "Table has entries");

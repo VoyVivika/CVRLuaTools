@@ -29,7 +29,8 @@ namespace NAK.LuaTools
             Vector3Int,
             RectInt,
             BoundsInt,
-            Table
+            Table,
+            Vector4
         }
 
         [Serializable]
@@ -59,7 +60,8 @@ namespace NAK.LuaTools
             public Vector3Int vector3IntValue;
             public RectInt rectIntValue;
             public BoundsInt boundsIntValue;
-            
+            public Vector4 vector4Value;
+
             // Table
             public BoundItem[] boundEntries;
         }

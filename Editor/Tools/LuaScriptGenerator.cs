@@ -201,6 +201,9 @@ namespace NAK.LuaTools
                     case NAKLuaClientBehaviourWrapper.BoundItemType.BoundsInt:
                         script.AppendLine($"{indent}[\"{boundName}\"] = UnityEngine.NewBoundsInt(UnityEngine.NewVector3Int({entry.boundsIntValue.position.x}, {entry.boundsIntValue.position.y}, {entry.boundsIntValue.position.z}), UnityEngine.NewVector3Int({entry.boundsIntValue.size.x}, {entry.boundsIntValue.size.y}, {entry.boundsIntValue.size.z})),");
                         break;
+                    case NAKLuaClientBehaviourWrapper.BoundItemType.Vector4:
+                        script.AppendLine($"{indent}[\"{boundName}\"] = UnityEngine.NewVector4({entry.vector4Value.x}, {entry.vector4Value.y}, {entry.vector4Value.z}, {entry.vector4Value.w}),");
+                        break;
                     case NAKLuaClientBehaviourWrapper.BoundItemType.LayerMask:
                         //script.AppendLine($"{indent}[\"{boundName}\"] = UnityEngine.NewLayerMask({entry.layerMaskValue.value}),");
                         //Debug.LogWarning("LayerMask constructor is not yet exposed to LUA!");
